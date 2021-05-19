@@ -30,7 +30,7 @@ This problem has been extensively studied since the 60’s, and is often categor
 
 
 ## <a name="three"></a>Semaphores and Mutex Locks
-Semaphores and mutex locks are data structures that control access of resources by processes.
+Semaphores and mutex locks are structures that control access of resources by processes.
 
 ### Mutex Lock
 **Mutex or Mutual Exclusion Object** is used to give access to a resource to only one process at a time. The mutex object allows all the processes to use the same resource but at a time, only one process is allowed to use the resource. Mutex uses lock-based technique to handle the critical-section problem.
