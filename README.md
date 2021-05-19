@@ -54,7 +54,7 @@ In the this problem writers must wait till **all waiting readers** are done read
 
 ## <a name="five"></a>Second Readers-Writers Problem
 
-As mentioned above, the code for the first problem allowed multiple readers, however, allowed writers to starve. The second solution helps prevent starvation of writers and is called the **writer-preference** problem.
+As mentioned above, the solution for the first problem allowed multiple readers, however, allowed writers to starve. The second solution helps prevent starvation of writers and is called the **writer-preference** problem.
 
 ## <a name="six"></a> Third Readers-Writers Problem (Starve-Free!)
 As both of the above solutions allow either readers or writers to starve, we need a solution that prevents starvation altogether.
