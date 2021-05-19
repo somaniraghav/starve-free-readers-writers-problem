@@ -75,7 +75,7 @@ int reader_count = 0; // Number of readers currently access the resource
 
 #### Implementation for writers
 ```cpp
-writer() {
+writer(){
   /* BEGIN ENTRY SECTION */
 
   // Wait for earlier process to finish accessing resource
