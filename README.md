@@ -75,87 +75,84 @@ int reader_count = 0; // Number of readers currently access the resource
 
 #### Implementation for writers
 ```cpp
-writer () {    
-    /* BEGIN ENTRY SECTION */
+writer() {
+  /* BEGIN ENTRY SECTION */
 
-    // Wait for earlier process to finish accessing resource
-    ServiceQueueSemaphore.wait();
-    // Request exclusive access to resource for writing
-    ResourceSemaphore.wait();
-    // Once access is granted, allow next item in queue to be serviced
-    ServiceQueueSemaphore.signal();
+  // Wait for earlier process to finish accessing resource
+  ServiceQueueSemaphore.wait();
+  // Request exclusive access to resource for writing
+  ResourceSemaphore.wait();
+  // Once access is granted, allow next item in queue to be serviced
+  ServiceQueueSemaphore.signal();
 
-    /* END ENTRY SECTION */
+  /* END ENTRY SECTION */
 
-    // Once the access to the resource is granted, we write to it
-    /*
-        WRITING SECTION
-    */
+  // Once the access to the resource is granted, we write to it
+  
+  /* WRITING SECTION */
 
-    /* BEGIN EXIT SECTION */
-    // Release file from lock after done accessing
-    ResourceSemaphore.signal(); 
-    /* END EXIT SECTION */
+  /* BEGIN EXIT SECTION */
+  // Release file from lock after done accessing
+  ResourceSemaphore.signal();
+  /* END EXIT SECTION */
 }
 ```
 
 #### Implementation for readers
 ```cpp
-reader () {
-	/* BEGIN ENTRY SECTION */
-	// Wait for earlier process to finish accessing resource
-	ServiceQueueSemaphore.wait();
-		
-	// Only one process must be allowed to update the reader count at a time.
-	ReadMutex.acquire();
-	
-	// Add 1 to it because a new process has come to read it.
-	reader_count++;
-	// Check if this process is the first to read it after a write operation has been done.
-    if (reader_count == 1)
-	    // If we are the first reader, then lock the resource from all writers (but not other readers).
-        ResourceSemaphore.wait();
-	
-	// Once access is granted, allow next item in queue to be serviced
-	ServiceQueueSemaphore.signal();
-	
-	ReadMutex.release(); // Done updating reader_count
-	/* END CRITICAL SECTION */
-    
-	// Once the access to the resource is granted, we read it
-    /*
-	    READING SECTION
-	*/
-	
-	/* BEGIN EXIT SECTION */
-	// Only one process must be allowded to update the reader count at a time.
-    ReadMutex.acquire(); 
-    
-	/* BEGIN CRITICAL SECTION */
-    // This is a critical section because reader_count is a global variable and is being updated.
-    
-    // Subtract 1 from it because a process has finished reading it.
-	reader_count--;       
-	
-	// Checks if this process is the last to read it.
-    if (reader_count == 0)
-	    // If we are the last reader, then release the lock from the resource, and
-	    // allow writers to write to it if they want.
-        ResourceSemaphore.signal();
-	/* END CRITICAL SECTION */
-    
-    ReadMutex.release();           // Release read mutex
-   	/* END EXIT SECTION */
+reader(){
+  /* BEGIN ENTRY SECTION */
+  // Wait for earlier process to finish accessing resource
+  ServiceQueueSemaphore.wait();
+
+  // Only one process must be allowed to update the reader count at a time.
+  ReadMutex.acquire();
+
+  // Add 1 to it because a new process has come to read it.
+  reader_count++;
+  // Check if this process is the first to read it after a write operation has been done.
+  
+  if(reader_count == 1)
+    // If we are the first reader, then lock the resource from all writers (but not other readers).
+    ResourceSemaphore.wait();
+
+  // Once access is granted, allow next item in queue to be serviced
+  ServiceQueueSemaphore.signal();
+
+  ReadMutex.release(); // Done updating reader_count
+  /* END CRITICAL SECTION */
+
+  // Once the access to the resource is granted, we read it
+  
+  /* READING SECTION */
+
+  /* BEGIN EXIT SECTION */
+  // Only one process must be allowded to update the reader count at a time.
+  ReadMutex.acquire();
+
+  /* BEGIN CRITICAL SECTION */
+  // This is a critical section because reader_count is a global variable and is being updated.
+
+  // Subtract 1 from it because a process has finished reading it.
+  reader_count--;
+
+  // Checks if this process is the last to read it.
+  if(reader_count == 0)
+    // If we are the last reader, then release the lock from the resource, and
+    // allow writers to write to it if they want.
+    ResourceSemaphore.signal();
+  /* END CRITICAL SECTION */
+
+  ReadMutex.release(); // Release read mutex
+  /* END EXIT SECTION */
 }
 ```
 
 This method prevents starvation of both readers and writers because it follows the following protocol:
+- Queue used is FIFO
 - If a reader is reading a resource: 
 	- Allow all subsequent readers to read as well.
-	- If a writer arrives then it is pushed to the waiting queue. The writer is given access once all readers that arrived before it have finished reading.
+	- If a writer arrives then it is pushed to the waiting queue. The writer is given access once all readers that arrived before it have finished reading. All the new readers that arrive in the meantime after writer are added to queue.
 - If a writer is writing to a resource:
 	- Push any subsequent readers / writers to the waiting queue.
 
-**Note:**
-- As a queue follows a FIFO ordering, waiting time for all processes is bound. No process that comes later is given priority over the processes already waiting in queue based on their type of action (read/write).
-- A reader_count is maintained for Readers to allow for simultaneous reading of a resource. Such a value is not required for writers because we know that writer_count will always be either 0 or 1.
